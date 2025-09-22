@@ -7,7 +7,22 @@ source "${BASE_DIR}/framework.sh"
 user=${USER:-$(id -un)}
 hostname=${HOSTNAME:-$(hostname)}
 usercount=$(users | wc -w)
-users=$(who | awk '{print $1 $6}' | paste -sd ' ')
+
+# Create array of users with their IPs
+users=()
+while IFS= read -r line; do
+    if [[ -n "$line" ]]; then
+        user_info=$(echo "$line" | awk '{print $1 $6}')
+        users+=("$user_info")
+    fi
+done < <(who)
+
+# Use print_wrap to properly format the users list
+if [[ ${#users[@]} -gt 0 ]]; then
+    text=$(print_wrap "${WIDTH}" "${users[@]}")
+else
+    text="No users logged in"
+fi
 
 print_columns "Logged as" "${user}@${hostname}"
-print_columns "Users ($usercount)" "$users"
+print_columns "Users ($usercount)" "$text"
