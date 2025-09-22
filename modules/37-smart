@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+# shellcheck source=./framework.sh
+source "${BASE_DIR}/framework.sh"
+
+type smartctl > /dev/null 2>&1 || exit 1
+# Check if the user can execute smartctl with sudo without any password
+sudo -n smartctl --version > /dev/null 2>&1 || exit 1
+
+# Disk list:
+disks=$(lsblk | awk '($6=="disk") {print $1}')
+
+statuses=()
+for disk in ${disks}; do
+    # Avoid getting an error if disk doesn't work with smart
+    smart_result=$(sudo smartctl -H "/dev/${disk}" 2> /dev/null || true)
+    smart_value="${CW}unavailable${CN}"
+
+    if echo "${smart_result}" | grep -q '^SMART overall\|^SMART Health Status'; then
+        smart_test=$(echo "${smart_result}" | grep '^SMART overall\|^SMART Health Status' | rev | cut -d ' ' -f1 | rev)
+
+        if [[ "${smart_test}" == 'PASSED' ]]; then
+            smart_value="${CO}${smart_test}${CN}"
+        else
+            smart_value="${CE}${smart_test}${CN}"
+        fi
+    fi
+
+    statuses+=("${disk} ${smart_value}")
+done
+
+text=$(print_wrap "${WIDTH}" "${statuses[@]}")
+
+print_columns "S.M.A.R.T." "${text}"
