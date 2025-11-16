@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+# shellcheck source=./framework.sh
+source "${BASE_DIR}/framework.sh"
+
+print_columns "Southern Caribbean Cruise" "NCL EPIC | January 18th - January 25th"
+print_columns "Itinerary Map" "https://freshkosher.cruises/norwegian/norwegian-epic/jan-18-2026/map.webp"
